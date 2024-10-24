@@ -1,5 +1,6 @@
 import random
 from argparse import Namespace, ArgumentParser
+from pathlib import Path
 import torch
 import numpy as np
 import time
@@ -28,8 +29,14 @@ class ModelMRI:
         self.optimizer, self.scheduler = get_optimizer(args.optmizer, args.scheduler, self.net_mri.parameters(), lr=args.lr)
         self.cri_contrast = get_loss("contrastive")
         self.cri_ce = get_loss("ce")
-        self.writer_train = SummaryWriter(log_dir=f"./runs/train_{args.run}")
-        self.writer_val = SummaryWriter(log_dir=f"./runs/val_{args.run}")
+        path_log = Path("runs")
+        path_log.mkdir(parents=True, exist_ok=True)
+        path_log_train = path_log / f"./runs/train_{args.run}"
+        path_log_train.mkdir(parents=True, exist_ok=True)
+        path_log_val = path_log / f"./runs/val_{args.run}"
+        path_log_val.mkdir(parents=True, exist_ok=True)
+        self.writer_train = SummaryWriter(log_dir=path_log_train.__str__())
+        self.writer_val = SummaryWriter(log_dir=path_log_val.__str__())
 
     def train(self):
         loss_best = 1e4
@@ -54,7 +61,7 @@ class ModelMRI:
         self.writer_train.close()
         self.writer_val.close()
 
-def validate_epoch(self, epoch):
+    def validate_epoch(self, epoch):
         self.net_mri.val()
         self.optimizer.zero_grad()
         loss_epoch = 0.
