@@ -1,7 +1,6 @@
 from typing import Tuple
 from argparse import Namespace
 import torch
-import torch.utils.tran
 import torchvision.transforms.v2 as vtf2
 from torch.utils.data import DataLoader
 
