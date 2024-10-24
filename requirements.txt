@@ -1,0 +1,11 @@
+nilearn
+matplotlib
+scikit-learn
+pandas
+open_clip_torch
+opencv-python
+opencv-contrib-python
+transformers
+--index-url https://download.pytorch.org/whl/cu124
+torch
+torchvision
