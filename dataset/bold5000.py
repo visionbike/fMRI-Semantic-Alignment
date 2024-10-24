@@ -1,28 +1,46 @@
-from typing import Tuple
-from argparse import Namespace
+from typing import Optional, Callable, Dict
+from pathlib import Path
+import random
+import numpy as np
+import cv2
 import torch
-import torch.utils.tran
-import torchvision.transforms.v2 as vtf2
-from torch.utils.data import DataLoader
+from torch.utils.data import Dataset
 
-__all__ = ["get_dataloaders"]
+class BOLD5000(Dataset):
+    def __init__(
+            self,
+            path_data: str,
+            mode: str = "train",
+            tf_image: Optional[Callable] = None
+    ) -> None:
+        self.path_data = Path(path_data)
+        self.map_label = np.load(self.path_data / "label_map.npy").tolist()
+        self.map_stimuli = np.load(self.path_data / "stimuli_map.npy", allow_pickle=True).tolist()
+        self.data = np.load(self.path_data / f"{mode}.npy", allow_pickle=True).tolist()
+        self.tf_image = tf_image
 
-def get_dataloaders(args: Namespace) -> Tuple[DataLoader, ...]:
-    transform_image = vtf2.Compose([
-        vtf2.ToImage(),
-        vtf2.ToDtype(torch.float32, scale=True),
-        vtf2.Resize((224, 224)),
-        vtf2.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711))
-    ])
-    loader_train, loader_val, loader_test = None, None, None
-    if args.dataset == "BOLD5000":
-        from .bold5000 import BOLD5000
-        dataset_train = BOLD5000(path_data=args.data_path, mode="train", tf_image=transform_image)
-        dataset_val = BOLD5000(path_data=args.data_path, mode="val", tf_image=transform_image)
-        dataset_test = BOLD5000(path_data=args.data_path, mode="test", tf_image=transform_image)
-        loader_train = DataLoader(dataset_train, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True)
-        loader_val = DataLoader(dataset_val, batch_size=args.batch_size, shuffle=False, num_workers=8, pin_memory=True)
-        loader_test = DataLoader(dataset_test, batch_size=1, shuffle=False, num_workers=8, pin_memory=True)
-    else:
-        print("The dataset is not supported!")
-    return loader_train, loader_val, loader_test
+    def __len__(self) -> int:
+        return len(self.data["label"])
+
+    def __getitem__(self, idx: int) -> Dict:
+        mri = self.data["data"][idx]
+        tgt = self.data["label"][idx]
+        if torch.rand(1) >= 0.5:
+            # get positive image
+            fn_img = random.choice(self.map_stimuli[tgt])
+            cls_name = self.map_label[tgt]
+            contrastive = 0
+        else:
+            map_label_neg = self.map_label.copy()
+            map_label_neg.remove(tgt)
+            cls_name = random.choice(map_label_neg)
+            tgt_neg = self.map_label.index(cls_name)
+            fn_img = random.choice(self.map_stimuli[tgt_neg])
+            contrastive = 1
+        img = cv2.imread(fn_img, cv2.IMREAD_COLOR)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        if self.tf_image:
+            img = self.tf_image(img)
+        mri = torch.from_numpy(mri).float()
+        tgt = torch.tensor(tgt).long()
+        return {"mri": mri, "img": img, "tgt": tgt, "cls_name": cls_name, "contrastive": contrastive}

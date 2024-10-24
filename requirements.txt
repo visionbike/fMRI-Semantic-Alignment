@@ -1,11 +1,4 @@
-nilearn
-matplotlib
-scikit-learn
-pandas
-open_clip_torch
-opencv-python
-opencv-contrib-python
-transformers
---index-url https://download.pytorch.org/whl/cu124
-torch
-torchvision
+nilearn >= 0.10.4
+opencv-python >= 4.10.0.84
+opencv-contrib-python >= 4.10.0.84
+einops >= 0.8.0
