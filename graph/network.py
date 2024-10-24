@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from einops.layers.torch import Rearrange
-import mobileclip
+import open_clip
 
 
 __all__ = ["CLIPTuner"]
@@ -13,7 +13,7 @@ class CLIPTuner(nn.Module):
             num_classes: int = 4
     ) -> None:
         super().__init__()
-        self.clip_model_mri, _, _ = mobileclip.create_model_and_transforms("mobileclip_b", "./ml-mobileclip/checkpoints/mobileclip_blt.pt", reparameterize=False)
+        self.clip_model_mri, _, _ = open_clip.create_model_and_transforms('MobileCLIP-S2', pretrained='datacompdr', reparameterize=False)
         self.proj_img = nn.Sequential(
             nn.Linear(64292,150528, bias=True),
             nn.LayerNorm(150528),
@@ -44,10 +44,10 @@ class CLIPTuner(nn.Module):
 
 
 if __name__ == "__main__":
-    clip_model_pretrain, _, _ = mobileclip.create_model_and_transforms("mobileclip_b", "./ml-mobileclip/checkpoints/mobileclip_blt.pt")
+    clip_model_pretrain, _, _ = open_clip.create_model_and_transforms('MobileCLIP-S2', pretrained='datacompdr')
     cls_name = "animal"
     model = CLIPTuner()
-    clip_tokenizer = mobileclip.get_tokenizer("mobileclip_b")
+    clip_tokenizer = open_clip.get_tokenizer("MobileCLIP-S2")
     mri = torch.randn((1, 64292))
     img = torch.randn((1, 3, 224, 224))
     with torch.no_grad(), torch.cuda.amp.autocast():
