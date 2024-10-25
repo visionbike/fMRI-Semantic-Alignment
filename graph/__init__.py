@@ -1,5 +1,6 @@
 from typing import Any
 import torch.nn as nn
+import torch.optim as optim
 
 __all__ = [
     "get_optimizer",
@@ -11,7 +12,6 @@ __all__ = [
 def get_optimizer(name: str, scheduler: str, parameters: Any, lr: float = 0.001) -> optim.Optimizer:
     optimizer = None
     if name == "adam":
-        import torch.optim as optim
         optimizer = optim.Adam(parameters, lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, amsgrad=False)
     lr_scheduler = None
     if scheduler == "step":
@@ -28,6 +28,9 @@ def get_loss(name: str) -> nn.Module:
         loss_ = ContrastiveLoss()
     elif name == "ce":
         loss_ = nn.CrossEntropyLoss()
+    elif name == "combine":
+        from .loss import CombineLoss
+        loss_ = CombineLoss()
     else:
         print("The loss is not supported!")
     return loss_

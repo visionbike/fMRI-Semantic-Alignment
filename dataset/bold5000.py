@@ -32,7 +32,7 @@ class BOLD5000(Dataset):
             contrastive = 0
         else:
             map_label_neg = self.map_label.copy()
-            map_label_neg.remove(tgt)
+            map_label_neg.remove(self.map_label[tgt])
             cls_name = random.choice(map_label_neg)
             tgt_neg = self.map_label.index(cls_name)
             fn_img = random.choice(self.map_stimuli[tgt_neg])
@@ -43,4 +43,5 @@ class BOLD5000(Dataset):
             img = self.tf_image(img)
         mri = torch.from_numpy(mri).float()
         tgt = torch.tensor(tgt).long()
+        contrastive = torch.tensor(contrastive).float()
         return {"mri": mri, "img": img, "tgt": tgt, "cls_name": cls_name, "contrastive": contrastive}
